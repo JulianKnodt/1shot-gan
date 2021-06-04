@@ -62,6 +62,10 @@ def train(img, gen, disc, gen_opt, disc_opt, args):
       fake_int8 = (fake * 255).byte()
       torchvision.io.write_jpeg(fake_int8, f"outputs/train_{i:05}.jpg")
 
+def save(gen, disc):
+  torch.save(gen, "models/generator.pt")
+  torch.save(disc, "models/discriminator.pt")
+
 def test(img, gen, disc, args):
   ...
 
@@ -77,6 +81,7 @@ def run():
   disc_opt = optim.Adam(disc.parameters(), lr=args.learning_rate)
   # train model
   train(img, gen, disc, gen_opt, disc_opt, args)
+  if args.epochs > 0: save(gen, disc)
   # test model
   test(img, gen, disc, args)
 
