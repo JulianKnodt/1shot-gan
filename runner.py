@@ -32,7 +32,16 @@ def model():
 def train(img, gen, disc, opt, args):
   t = trange(args.epochs)
   for i in t:
-    ...
+    opt.zero_grad()
+    # generator step
+    img = gen(gen.generate_latent())
+    img
+    # discriminator step
+    d_content, d_layout, d_low_level = disc(img)
+    adversarial = d_content + d_layout + 2 * d_low_level
+    adversarial.backward()
+
+    opt.step()
 
 def test(img, gen, disc, args):
   ...
@@ -47,7 +56,7 @@ def run():
 
   opt = optim.Adam(chain(gen.parameters(), disc.parameters()), lr=args.learning_rate)
   # train model
-  train(img, gen, disc, args)
+  train(img, gen, disc, opt, args)
   # test model
   test(img, gen, disc, args)
 

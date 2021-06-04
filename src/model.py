@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
+import torchvision
 
 class Discriminator(nn.Module):
   def __init__(self):
     super().__init__()
-    self.conv =
   def forward(self, img) -> ("D_content", "D_layout", "D_low_level"):
     assert(len(img.shape) == 3), "Expected shape [RGB, H, W]"
     assert(img.shape[0] == 3), "Expected shape [RGB, H, W]"
@@ -17,7 +17,12 @@ class Generator(nn.Module):
   ):
     super().__init__()
     self.latent_size = latent_size
+    self.resnet18 = torchvision.models.resnet18(pretrained=True)
   def forward(self, latent) -> ["RGB", "H'", "W'"]:
     raise NotImplementedError()
-  def generate_latent(self, device="cpu"):
-    return torch.randn(self.latent_size, device=device, dtype=torch.float)
+
+    x = latent
+    assert(x.shape[0] == 3)
+    return x
+  def generate_latent(self):
+    return torch.randn(self.latent_size, device=self.device, dtype=torch.float)
