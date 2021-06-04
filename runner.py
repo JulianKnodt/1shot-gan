@@ -1,9 +1,9 @@
 import argparse
 import torch
 import torch.optim as optim
+import torch.nn.functional as F
 import torchvision
 from tqdm import trange
-from itertools import chain
 
 from src.model import ( Generator, Discriminator )
 
@@ -14,6 +14,7 @@ def arguments():
   a.add_argument(
     "-lr", "--learning-rate", help="Learning rate for model", type=float, default=5e-3
   )
+  a.add_argument("--batch-size", help="Training batch size", type=int, default=6)
   return a.parse_args()
 
 device = "cpu"
@@ -29,19 +30,37 @@ def model():
   gen = Generator().to(device)
   return gen, disc
 
-def train(img, gen, disc, opt, args):
+def train(img, gen, disc, gen_opt, disc_opt, args):
   t = trange(args.epochs)
   for i in t:
-    opt.zero_grad()
-    # generator step
-    img = gen(gen.generate_latent())
-    img
-    # discriminator step
-    d_content, d_layout, d_low_level = disc(img)
-    adversarial = d_content + d_layout + 2 * d_low_level
-    adversarial.backward()
+    # train discriminator
+    disc_opt.zero_grad()
+    real_pred = disc(img)
+    real_label = torch.ones(batch_size, device=device)
+    real_loss = F.binary_cross_entropy_with_logits(real_pred, real_label)
+    real_loss.backward()
 
-    opt.step()
+    fake = gen(gen.generate_latent())
+    fake_pred = disc(fake.detach()) # TODO need to clone after detach?
+    fake_label = torch.zeros(batch_size, device=device)
+    fake_loss = F.binary_cross_entropy_with_logits(fake_pred, fake_label)
+    fake_loss.backward()
+    disc_opt.step()
+    # train generator
+    gen_opt.zero_grad()
+    pred = disc(fake)
+    mimic_loss = F.binary_cross_entropy_with_logits(pred, real_label)
+    mimic_loss.backward()
+    gen_opt.step()
+    t.set_postfix(
+      mimic=f"{ditto_loss.item():.03f}",
+      real=f"{real_loss.item():.03f}",
+      fake=f"{fake_loss.item():.03f}",
+      refresh=False,
+    )
+    if i % args.valid_freq == 0:
+      fake_int8 = (fake * 255).byte()
+      torchvision.io.write_jpeg(fake_int8, f"outputs/train_{i:05}.jpg")
 
 def test(img, gen, disc, args):
   ...
@@ -54,9 +73,10 @@ def run():
   # create GAN model
   gen, disc = model()
 
-  opt = optim.Adam(chain(gen.parameters(), disc.parameters()), lr=args.learning_rate)
+  gen_opt = optim.Adam(gen.parameters(), lr=args.learning_rate)
+  disc_opt = optim.Adam(disc.parameters(), lr=args.learning_rate)
   # train model
-  train(img, gen, disc, opt, args)
+  train(img, gen, disc, gen_opt, disc_opt, args)
   # test model
   test(img, gen, disc, args)
 

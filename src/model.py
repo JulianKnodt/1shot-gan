@@ -5,10 +5,12 @@ import torchvision
 class Discriminator(nn.Module):
   def __init__(self):
     super().__init__()
-  def forward(self, img) -> ("D_content", "D_layout", "D_low_level"):
+  def forward(self, img) -> "D: [B, 1]":
     assert(len(img.shape) == 3), "Expected shape [RGB, H, W]"
     assert(img.shape[0] == 3), "Expected shape [RGB, H, W]"
+    # ("D_content", "D_layout", "D_low_level")
     raise NotImplementedError()
+    return d_content + d_layout + 2 * d_low_level
 
 class Generator(nn.Module):
   def __init__(
