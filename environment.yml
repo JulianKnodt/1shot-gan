@@ -1,0 +1,8 @@
+name: oneshot-gan
+channels:
+  - pytorch
+dependencies:
+  - pytorch
+  # - cpuonly # uncomment if no cuda hardware on machine
+  - torchvision
+  - tqdm

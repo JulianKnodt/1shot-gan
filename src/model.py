@@ -9,6 +9,13 @@ class Discriminator(nn.Module):
     assert(len(img.shape) == 3), "Expected shape [RGB, H, W]"
     assert(img.shape[0] == 3), "Expected shape [RGB, H, W]"
     # ("D_content", "D_layout", "D_low_level")
+    # N_content = 3
+    # Also unsure if pretrained since the point seems to do everything from one image
+    D_content = nn.Sequential(
+      torchvision.models.resnet18(pretrained=False),
+      torchvision.models.resnet18(pretrained=False),
+      torchvision.models.resnet18(pretrained=False)
+    )
     raise NotImplementedError()
     return d_content + d_layout + 2 * d_low_level
 
